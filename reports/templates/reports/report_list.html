@@ -1,0 +1,28 @@
+{% extends "reports/base.html" %}
+{% block title %}Denúncias{% endblock %}
+{% block content %}
+<h1>Denúncias</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Título</th>
+      <th>Status</th>
+      <th>Localização</th>
+      <th>Criado em</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in reports %}
+    <tr>
+      <td>{{ r.titulo }}</td>
+      <td>{{ r.status }}</td>
+      <td>{{ r.localizacao }}</td>
+      <td>{{ r.criado_em }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4">Nenhuma denúncia cadastrada.</td></tr>
+  {% endfor %}
+  </tbody>
+ </table>
+{% endblock %}
+

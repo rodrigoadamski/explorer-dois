@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Explorer Dois{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>Explorer Dois</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/">Início</a></li>
+            <li><a href="/reports/list/">Denúncias</a></li>
+            <li><a href="/reports/new/">Nova denúncia</a></li>
+            <li><a href="/map/">Mapa</a></li>
+            {% if request.user.is_authenticated %}
+              <li><a href="/accounts/logout/">Sair ({{ request.user.username }})</a></li>
+            {% else %}
+              <li><a href="/accounts/login/">Entrar</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
+

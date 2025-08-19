@@ -1,0 +1,17 @@
+{% extends "reports/base.html" %}
+{% block title %}Início{% endblock %}
+{% block content %}
+<h1>Bem-vindo</h1>
+<p>Portal para denúncias ambientais e visualização em mapa.</p>
+<div class="grid">
+  <a role="button" href="/reports/new/">Nova denúncia</a>
+  <a role="button" href="/reports/list/" class="secondary">Ver denúncias</a>
+  <a role="button" href="/map/" class="contrast">Abrir mapa</a>
+  <a role="button" href="/admin/" target="_blank">Admin</a>
+  <a role="button" href="/api/reports/" target="_blank">API (JSON)</a>
+  {% if not request.user.is_authenticated %}
+    <a role="button" href="/accounts/login/">Entrar</a>
+    <a role="button" href="/accounts/signup/" class="secondary">Criar conta</a>
+  {% endif %}
+{% endblock %}
+

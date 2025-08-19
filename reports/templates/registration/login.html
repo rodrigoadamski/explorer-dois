@@ -1,0 +1,12 @@
+{% extends "reports/base.html" %}
+{% block title %}Entrar{% endblock %}
+{% block content %}
+<h1>Entrar</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Entrar</button>
+  <a href="/accounts/signup/" style="margin-left: 8px;">Criar conta</a>
+</form>
+{% endblock %}
+

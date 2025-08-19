@@ -1,0 +1,15 @@
+{% extends "reports/base.html" %}
+{% block title %}Nova denúncia{% endblock %}
+{% block content %}
+<h1>Nova denúncia</h1>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <fieldset>
+    {{ form.as_p }}
+  </fieldset>
+  <button type="submit">Salvar</button>
+  <a role="button" class="secondary" href="/reports/list/">Cancelar</a>
+  <p><small>Formato de localização: lat,lon (ex.: -23.55,-46.63)</small></p>
+  <p><small>Após salvar, veja no <a href="/map/">Mapa</a>.</small></p>
+{% endblock %}
+
