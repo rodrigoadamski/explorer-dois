@@ -184,6 +184,16 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+STATIC_URL = '/static/'
+
+# Caminho para onde o collectstatic vai jogar os arquivos
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# (Opcional) Se tiver arquivos estáticos dentro dos apps
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
 # Auth redirects
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
