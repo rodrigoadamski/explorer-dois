@@ -1,0 +1,183 @@
+{% extends "reports/base.html" %}
+
+{% block title %}Dados Ambientais - INPE{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>🌍 Dados Ambientais - INPE</h1>
+    <p>Consulte dados meteorológicos, qualidade do ar e focos de queimadas em tempo real.</p>
+    
+    <!-- Formulário para buscar dados -->
+    <form id="formDadosAmbientais" class="card">
+        <h3>🔍 Buscar Dados por Localização</h3>
+        <div class="grid">
+            <div>
+                <label for="lat">Latitude:</label>
+                <input type="number" id="lat" name="lat" step="any" placeholder="-23.5505" required>
+                <small>Ex: -23.5505 (São Paulo)</small>
+            </div>
+            <div>
+                <label for="lon">Longitude:</label>
+                <input type="number" id="lon" name="lon" step="any" placeholder="-46.6333" required>
+                <small>Ex: -46.6333 (São Paulo)</small>
+            </div>
+            <div>
+                <label for="cidade">Cidade:</label>
+                <input type="text" id="cidade" name="cidade" placeholder="São Paulo" required>
+                <small>Nome da cidade</small>
+            </div>
+        </div>
+        <button type="submit">🔍 Buscar Dados</button>
+    </form>
+    
+    <!-- Loading -->
+    <div id="loading" style="display: none;" class="card">
+        <p>🔄 Buscando dados do INPE...</p>
+        <progress></progress>
+    </div>
+    
+    <!-- Resultados -->
+    <div id="resultados" style="display: none;">
+        <div class="grid">
+            <!-- Dados Meteorológicos -->
+            <div class="card">
+                <h3>🌤️ Dados Meteorológicos</h3>
+                <div id="meteorologia">
+                    <p>Carregando...</p>
+                </div>
+            </div>
+            
+            <!-- Qualidade do Ar -->
+            <div class="card">
+                <h3>🌬️ Qualidade do Ar</h3>
+                <div id="qualidade-ar">
+                    <p>Carregando...</p>
+                </div>
+            </div>
+            
+            <!-- Queimadas -->
+            <div class="card">
+                <h3>🔥 Focos de Queimadas</h3>
+                <div id="queimadas">
+                    <p>Carregando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Erro -->
+    <div id="erro" style="display: none;" role="alert">
+        <p>❌ Erro ao buscar dados. Tente novamente.</p>
+        <div id="erro-detalhes"></div>
+    </div>
+    
+    <!-- Informações sobre as APIs -->
+    <details class="card">
+        <summary>ℹ️ Sobre os Dados</summary>
+        <p><strong>Fonte:</strong> Instituto Nacional de Pesquisas Espaciais (INPE)</p>
+        <ul>
+            <li><strong>Meteorologia:</strong> Temperatura, umidade, pressão atmosférica e vento</li>
+            <li><strong>Qualidade do Ar:</strong> Índices de poluição (PM2.5, PM10, O₃, NO₂)</li>
+            <li><strong>Queimadas:</strong> Focos de incêndio detectados por satélite</li>
+        </ul>
+        <p><small>Os dados são atualizados em tempo real e podem apresentar pequenas variações.</small></p>
+    </details>
+</div>
+
+<script>
+document.getElementById('formDadosAmbientais').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const lat = document.getElementById('lat').value;
+    const lon = document.getElementById('lon').value;
+    const cidade = document.getElementById('cidade').value;
+    
+    // Mostrar loading
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultados').style.display = 'none';
+    document.getElementById('erro').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/dados-ambientais/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                lat: parseFloat(lat),
+                lon: parseFloat(lon),
+                cidade: cidade
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Exibir dados meteorológicos
+            const meteo = data.dados.meteorologia;
+            document.getElementById('meteorologia').innerHTML = `
+                <table>
+                    <tr><td><strong>Cidade:</strong></td><td>${meteo.cidade}</td></tr>
+                    <tr><td><strong>Temperatura:</strong></td><td>${meteo.temperatura}°C</td></tr>
+                    <tr><td><strong>Umidade:</strong></td><td>${meteo.umidade}%</td></tr>
+                    <tr><td><strong>Pressão:</strong></td><td>${meteo.pressao} hPa</td></tr>
+                    <tr><td><strong>Vento:</strong></td><td>${meteo.vento_velocidade} km/h ${meteo.vento_direcao}</td></tr>
+                    <tr><td><strong>Condição:</strong></td><td>${meteo.descricao}</td></tr>
+                </table>
+                <small>Atualizado: ${new Date(meteo.atualizado_em).toLocaleString('pt-BR')}</small>
+            `;
+            
+            // Exibir qualidade do ar
+            const ar = data.dados.qualidade_ar;
+            const corCategoria = ar.indice_qualidade <= 50 ? 'green' : ar.indice_qualidade <= 100 ? 'yellow' : 'red';
+            document.getElementById('qualidade-ar').innerHTML = `
+                <table>
+                    <tr><td><strong>Índice:</strong></td><td><span style="color: ${corCategoria}; font-weight: bold;">${ar.indice_qualidade} (${ar.categoria})</span></td></tr>
+                    <tr><td><strong>PM2.5:</strong></td><td>${ar.pm25} µg/m³</td></tr>
+                    <tr><td><strong>PM10:</strong></td><td>${ar.pm10} µg/m³</td></tr>
+                    <tr><td><strong>Ozônio (O₃):</strong></td><td>${ar.o3} ppb</td></tr>
+                    <tr><td><strong>NO₂:</strong></td><td>${ar.no2} ppb</td></tr>
+                </table>
+                <small>Atualizado: ${new Date(ar.atualizado_em).toLocaleString('pt-BR')}</small>
+            `;
+            
+            // Exibir queimadas
+            const queimadas = data.dados.queimadas;
+            document.getElementById('queimadas').innerHTML = `
+                <p><strong>Focos próximos (50km):</strong> <span style="font-size: 1.2em; font-weight: bold;">${queimadas.length}</span></p>
+                ${queimadas.length > 0 ? `
+                    <details>
+                        <summary>Ver detalhes dos focos</summary>
+                        <ul>
+                            ${queimadas.slice(0, 10).map(foco => `
+                                <li>${foco.municipio} - ${foco.estado} (${foco.data})</li>
+                            `).join('')}
+                            ${queimadas.length > 10 ? `<li><em>... e mais ${queimadas.length - 10} focos</em></li>` : ''}
+                        </ul>
+                    </details>
+                ` : '<p style="color: green;">✅ Nenhum foco detectado na região</p>'}
+                <small>Dados dos últimos 7 dias</small>
+            `;
+            
+            document.getElementById('resultados').style.display = 'block';
+        } else {
+            throw new Error(data.error || 'Erro desconhecido');
+        }
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        document.getElementById('erro').style.display = 'block';
+        document.getElementById('erro-detalhes').innerHTML = `<small>Detalhes: ${error.message}</small>`;
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+});
+
+// Preencher com coordenadas de São Paulo por padrão
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('lat').value = '-23.5505';
+    document.getElementById('lon').value = '-46.6333';
+    document.getElementById('cidade').value = 'São Paulo';
+});
+</script>
+{% endblock %}

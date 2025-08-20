@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -19,6 +20,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env if present
 load_dotenv(BASE_DIR / ".env")
+
+# Import our custom environment configuration
+try:
+    import env_config
+except ImportError:
+    pass
 
 
 # Quick-start development settings - unsuitable for production
@@ -78,8 +85,25 @@ WSGI_APPLICATION = "core.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Database
-# Priority: Postgres via environment (Supabase) → fallback to SQLite
-if os.getenv("DB_NAME") or os.getenv("POSTGRES_DB"):
+# Priority: DATABASE_URL (Supabase/Postgres) → DB_* vars → SQLite
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    parsed = urlparse(database_url)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": parsed.path.lstrip("/") or os.getenv("DB_NAME"),
+            "USER": parsed.username or os.getenv("DB_USER"),
+            "PASSWORD": parsed.password or os.getenv("DB_PASSWORD"),
+            "HOST": parsed.hostname or os.getenv("DB_HOST", "localhost"),
+            "PORT": str(parsed.port or os.getenv("DB_PORT", "5432")),
+            "OPTIONS": {
+                "sslmode": os.getenv("DB_SSLMODE", "require"),
+                "connect_timeout": 10,
+            },
+        }
+    }
+elif os.getenv("DB_NAME") or os.getenv("POSTGRES_DB"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -88,6 +112,10 @@ if os.getenv("DB_NAME") or os.getenv("POSTGRES_DB"):
             "PASSWORD": os.getenv("DB_PASSWORD") or os.getenv("POSTGRES_PASSWORD"),
             "HOST": os.getenv("DB_HOST", "localhost"),
             "PORT": os.getenv("DB_PORT", "5432"),
+            "OPTIONS": {
+                "sslmode": os.getenv("DB_SSLMODE", "require"),
+                "connect_timeout": 10,
+            },
         }
     }
 else:
